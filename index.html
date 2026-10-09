@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>美式英语口语冲刺 App</title>
+<!-- PWA 应用配置 -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="manifest" href="data:application/json,{\"name\":\"美式口语冲刺\",\"short_name\":\"口语冲刺\",\"start_url\":\".\",\"display\":\"standalone\",\"background_color\":\"#0a0a0f\",\"theme_color\":\"#0a0a0f\"}">
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --accent: #4fffb0;
+    --accent2: #ff6b35;
+    --accent3: #7c6bff;
+    --text: #f0f0f5;
+    --muted: #6b6b80;
+    --border: #2a2a38;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(76,255,176,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 80% 90%, rgba(124,107,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 90% 20%, rgba(255,107,53,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header {
+    padding: 28px 0 20px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .flag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(76,255,176,0.1);
+    border: 1px solid rgba(76,255,176,0.25);
+    border-radius: 100px;
+    padding: 4px 12px 4px 8px;
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+
+  h1 span { color: var(--accent); }
+  .subtitle { color: var(--muted); font-size: 14px; margin-top: 8px; font-weight: 300; }
+
+  /* Progress Overview */
+  .progress-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .progress-label { font-size: 13px; color: var(--muted); }
+  .progress-count { font-family: 'Syne', sans-serif; font-size: 13px; color: var(--accent); font-weight: 700; }
+  .progress-bar-bg { background: var(--surface2); border-radius: 100px; height: 6px; overflow: hidden; }
+  .progress-bar-fill { background: linear-gradient(90deg, var(--accent), #00d4ff); height: 100%; border-radius: 100px; width: 8%; transition: width 0.5s ease; }
+
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .stat-box { background: var(--surface2); border-radius: 12px; padding: 12px 10px; text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  .stat-num.green { color: var(--accent); }
+  .stat-num.orange { color: var(--accent2); }
+  .stat-num.purple { color: var(--accent3); }
+  .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* AI Teacher Selector Cards */
+  .teacher-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .teacher-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+  }
+
+  .teacher-card.active {
+    border-color: var(--accent);
+    background: rgba(76,255,176,0.06);
+    box-shadow: 0 0 16px rgba(76,255,176,0.15);
+  }
+
+  .teacher-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .teacher-info { flex: 1; }
+  .teacher-name { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--text); }
+  .teacher-role { font-size: 12px; color: var(--accent3); margin-top: 2px; }
+  .teacher-desc { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.3; }
+
+  .teacher-select-badge {
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+
+  .teacher-card.active .teacher-select-badge {
+    background: var(--accent);
+    color: #0a0a0f;
+  }
+
+  /* Chat Box Mock */
+  .chat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .chat-msg {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .chat-bubble {
+    background: var(--surface2);
+    padding: 12px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  /* Section Title */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 20px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 6px var(--accent); }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 calc(14px + env(safe-area-inset-bottom));
+    z-index: 100;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 4px 12px;
+  }
+
+  .nav-item.active { color: var(--accent); }
+  .nav-item .nav-icon { font-size: 20px; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HOME TAB -->
+  <div class="tab-content active" id="tab-home">
+    <div class="header">
+      <div class="flag-badge">🇺🇸 American English App</div>
+      <h1>口语冲刺 <span>与 AI 导师</span></h1>
+      <p class="subtitle">每日 20 分钟 · 专属 AI 陪练</p>
+    </div>
+
+    <!-- Active AI Teacher Card Header -->
+    <div class="progress-card" style="background: linear-gradient(135deg, rgba(124,107,255,0.12), rgba(76,255,176,0.06));">
+      <div class="progress-header">
+        <span class="progress-label">当前对话 AI 导师</span>
+        <span class="progress-count" id="currentTeacherTag">Alex · 地道加州腔</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+        <div class="teacher-avatar" id="currentTeacherAvatar" style="width: 44px; height: 44px; font-size: 22px;">🧢</div>
+        <div>
+          <div style="font-weight: 700; font-size: 15px;" id="currentTeacherName">Alex</div>
+          <div style="font-size: 12px; color: var(--muted);" id="currentTeacherGreeting">"Hey there! Ready to practice today?"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Card -->
+    <div class="progress-card">
+      <div class="progress-header">
+        <span class="progress-label">总体表达掌握进度</span>
+        <span class="progress-count" id="progressCount">0 / 8 表达</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="mainProgressBar"></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-num green" id="statMastered">0</div>
+          <div class="stat-lbl">已掌握</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num orange">3</div>
+          <div class="stat-lbl">连续打卡</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num purple">第1月</div>
+          <div class="stat-lbl">发音强化</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEACHER TAB -->
+  <div class="tab-content" id="tab-teachers">
+    <div class="header">
+      <h1>选择你的 <span>AI 导师</span></h1>
+      <p class="subtitle">根据练习目标随时切换不同性格与声线</p>
+    </div>
+
+    <div class="section-title"><span class="dot"></span>可选 AI 口语导师</div>
+
+    <div class="teacher-grid">
+      <!-- Teacher 1 -->
+      <div class="teacher-card active" onclick="selectTeacher(0)">
+        <div class="teacher-avatar">🧢</div>
+        <div class="teacher-info">
+          <div class="teacher-name">Alex</div>
+          <div class="teacher-role">地道加州腔 · 闲聊与俚语</div>
+          <div class="teacher-desc">擅长日常聊天、美剧流行梗，语气随和轻松。</div>
+        </div>
+        <div class="teacher-select-badge">当前使用</div>
+      </div>
+
+      <!-- Teacher 2 -->
+      <div class="teacher-card" onclick="selectTeacher(1)">
+        <div class="teacher-avatar">👓</div>
+        <div class="teacher-info">
+          <div class="teacher-name">Sarah</div>
+          <div class="teacher-role">发音纠错官 · 标准美音</div>
+          <div class="teacher-desc">对连读、R音与音标要求严谨，及时纠正发音错误。</div>
+        </div>
+        <div class="teacher-select-badge">选择</div>
+      </div>
+
+      <!-- Teacher 3 -->
+      <div class="teacher-card" onclick="selectTeacher(2)">
+        <div class="teacher-avatar">💼</div>
+        <div class="teacher-info">
+          <div class="teacher-name">Michael</div>
+          <div class="teacher-role">职场进阶 · 商务与面试</div>
+          <div class="teacher-desc">专攻高级表达、逻辑汇报与专业场景对话。</div>
+        </div>
+        <div class="teacher-select-badge">选择</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 24px;"><span class="dot"></span>与导师在线对话演示</div>
+    <div class="chat-box">
+      <div class="chat-msg">
+        <div class="teacher-avatar" id="chatTeacherAvatar" style="width: 36px; height: 36px; font-size: 18px;">🧢</div>
+        <div class="chat-bubble" id="chatTeacherText">
+          What's up! Let's practice some everyday expressions today!
+        </div>
+      </div>
+      <button style="width: 100%; background: rgba(76,255,176,0.15); border: 1px solid var(--accent); color: var(--accent); border-radius: 12px; padding: 10px; font-weight: 700; cursor: pointer; margin-top: 6px;" onclick="speakAI()">
+        🎤 按住跟读练习
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab('home', this)">
+    <span class="nav-icon">🏠</span>
+    <span>主页</span>
+  </div>
+  <div class="nav-item" onclick="switchTab('teachers', this)">
+    <span class="nav-icon">🤖</span>
+    <span>AI 导师</span>
+  </div>
+</nav>
+
+<script>
+const teachers = [
+  {
+    name: "Alex",
+    avatar: "🧢",
+    role: "地道加州腔 · 闲聊与俚语",
+    greeting: "What's up! Ready to learn some cool expressions?",
+    voicePitch: 1.0,
+    voiceRate: 0.95
+  },
+  {
+    name: "Sarah",
+    avatar: "👓",
+    role: "发音纠错官 · 标准美音",
+    greeting: "Hello! Let's make sure your pronunciation is spot on.",
+    voicePitch: 1.2,
+    voiceRate: 0.85
+  },
+  {
+    name: "Michael",
+    avatar: "💼",
+    role: "职场进阶 · 商务与面试",
+    greeting: "Welcome! Let's practice some professional spoken English.",
+    voicePitch: 0.8,
+    voiceRate: 0.9
+  }
+];
+
+let selectedTeacherIdx = parseInt(localStorage.getItem('ai_teacher_idx') || '0');
+
+function updateTeacherUI() {
+  const t = teachers[selectedTeacherIdx];
+  document.getElementById('currentTeacherTag').textContent = `${t.name} · ${t.role.split('·')[0]}`;
+  document.getElementById('currentTeacherAvatar').textContent = t.avatar;
+  document.getElementById('currentTeacherName').textContent = t.name;
+  document.getElementById('currentTeacherGreeting').textContent = `"${t.greeting}"`;
+  
+  document.getElementById('chatTeacherAvatar').textContent = t.avatar;
+  document.getElementById('chatTeacherText').textContent = t.greeting;
+
+  const cards = document.querySelectorAll('.teacher-card');
+  cards.forEach((card, idx) => {
+    const badge = card.querySelector('.teacher-select-badge');
+    if (idx === selectedTeacherIdx) {
+      card.classList.add('active');
+      badge.textContent = '当前使用';
+    } else {
+      card.classList.remove('active');
+      badge.textContent = '选择';
+    }
+  });
+}
+
+function selectTeacher(idx) {
+  selectedTeacherIdx = idx;
+  localStorage.setItem('ai_teacher_idx', idx.toString());
+  updateTeacherUI();
+  speakAI();
+}
+
+function speakAI() {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const t = teachers[selectedTeacherIdx];
+    const utt = new SpeechSynthesisUtterance(t.greeting);
+    utt.lang = 'en-US';
+    utt.pitch = t.voicePitch;
+    utt.rate = t.voiceRate;
+    window.speechSynthesis.speak(utt);
+  }
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  el.classList.add('active');
+}
+
+// Init
+updateTeacherUI();
+</script>
+</body>
+</html>

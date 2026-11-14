@@ -612,6 +612,9 @@
     pushTimeoutMs: 15000
   };
 
+  // 本机账本被云端覆盖前先留一份，万一覆盖错了能在面板里一键找回
+  var RESCUE_KEY = 'zihan_salon_rescue_v1';
+
   var cloud = {
     ready: false,   // 首次云端拉取是否已经有结果（成功或失败都算，不阻塞 App）
     state: 'init',  // init | syncing | synced | offline
@@ -716,6 +719,43 @@
         });
       }).catch(function (err) { finish(reject, err); });
     });
+  }
+
+  /* 把当前本机账本存一份「被云端覆盖前」的快照（只在本机有会员/流水时） */
+  function rescueSnapshot() {
+    if (!storageOK) return;
+    if (!db.members.length && !db.transactions.length && !db.staff.length) return;
+    try {
+      window.localStorage.setItem(RESCUE_KEY, JSON.stringify({ at: nowISO(), data: db }));
+    } catch (e) { /* 存不下就算了，不能因为备份打断使用 */ }
+  }
+
+  function rescueInfo() {
+    try {
+      var raw = window.localStorage.getItem(RESCUE_KEY);
+      if (!raw) return null;
+      var obj = JSON.parse(raw);
+      if (!obj || !obj.data) return null;
+      var d = obj.data;
+      return {
+        at: obj.at || '',
+        atText: obj.at ? clockText(new Date(obj.at)) : '',
+        members: (d.members || []).length,
+        transactions: (d.transactions || []).length
+      };
+    } catch (e) { return null; }
+  }
+
+  function rescueRestore() {
+    var raw = null;
+    try { raw = window.localStorage.getItem(RESCUE_KEY); } catch (e) { raw = null; }
+    if (!raw) return null;
+    var obj = JSON.parse(raw);
+    db = normalize(obj.data);
+    db.seeded = true;
+    persist();
+    try { window.localStorage.removeItem(RESCUE_KEY); } catch (e) { /* ignore */ }
+    return { members: db.members.length, transactions: db.transactions.length };
   }
 
   /* 把云端一行写进本机：覆盖 db、落 localStorage（不回推），记下云端时间戳。 */
@@ -848,6 +888,8 @@
         var row = rows && rows[0] ? rows[0] : null;
         cloud.ready = true;
         if (row && row.data && typeof row.data === 'object') {
+          // 以云端为准之前，先把本机这本（如果是真账）存一份快照，面板里可找回
+          rescueSnapshot();
           applyCloudRow(row);
           cloud.dirty = false;
           setCloudState('synced');
@@ -1829,7 +1871,9 @@
     cloudInfo: cloudInfo,
     cloudSyncNow: cloudSyncNow,
     cloudReady: function () { return cloud.ready; },
-    cloudPull: cloudPull
+    cloudPull: cloudPull,
+    rescueInfo: rescueInfo,
+    rescueRestore: rescueRestore
   };
 })();
 
@@ -1994,6 +2038,18 @@
     '</div>';
   }
 
+  /* 本机账本被云端覆盖前存的那份快照（只有真被覆盖过才会出现） */
+  function rescueBlock() {
+    var r = L.rescueInfo ? L.rescueInfo() : null;
+    if (!r) return '';
+    return '<div class="zh-sec" style="margin-top:14px">' +
+      '<h3>云端覆盖前的本机账本</h3>' +
+      '<p>' + (r.atText ? r.atText + ' ' : '') + '这台设备原来的账本（<b>' + r.members + '</b> 位会员、<b>' + r.transactions +
+        '</b> 条流水）在跟云端对齐时被换下来了，原件还留着。如果那才是对的，点下面找回来（会同时推上云端）。</p>' +
+      '<div class="zh-btns"><button class="zh-btn" type="button" data-zh="rescue">找回这份本机账本</button></div>' +
+    '</div>';
+  }
+
   function sheetHTML() {
     var st = L.stats();
     var demo = st.demoMembers;
@@ -2015,6 +2071,8 @@
       '</div>' +
 
       cloudBlock() +
+
+      rescueBlock() +
 
       '<div class="zh-sec" style="margin-top:14px">' +
         '<h3>备份与恢复</h3>' +
@@ -2101,6 +2159,7 @@
       if (act === 'export') { doExport(); return; }
       if (act === 'import') { pickImport(); return; }
       if (act === 'sync') { doSync(); return; }
+      if (act === 'rescue') { doRescue(); return; }
       if (act === 'demo') { doClearDemo(); return; }
       if (act === 'seed') { doSeedDemo(); return; }
       if (act === 'reset') { doReset(); return; }
@@ -2121,6 +2180,20 @@
     var h = sheet.querySelector('.zh-h');
     if (h && h.parentNode) h.parentNode.insertBefore(box, h.nextSibling.nextSibling);
     setTimeout(function () { if (box.parentNode) box.remove(); }, 3200);
+  }
+
+  function doRescue() {
+    var r = L.rescueInfo ? L.rescueInfo() : null;
+    if (!r) { flash('没有可找回的本机账本。', 'bad'); return; }
+    if (!window.confirm('用这台设备原来的账本（' + r.members + ' 位会员、' + r.transactions +
+      ' 条流水）覆盖现在的数据，并推到云端？\n\n另一台设备几秒内也会跟着变成这本。')) return;
+    try {
+      var res = L.rescueRestore();
+      flash('已找回：' + res.members + ' 位会员、' + res.transactions + ' 条流水，正在同步到云端…', 'ok');
+      syncThenReload();
+    } catch (e) {
+      flash('找回失败：' + (e && e.message ? e.message : e), 'bad');
+    }
   }
 
   function doSync() {

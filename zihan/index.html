@@ -287,11 +287,12 @@
     </div>
     <script>
 /* =============================================================================
-   紫涵会员 App · 纯本地数据引擎
+   紫涵会员 App · 数据引擎（本地缓存 + 云端实时同步）
    -----------------------------------------------------------------------------
    原版 App 通过 @hatch/space-sdk 的 action client POST ./actions 到服务器。
    这里用一个完全等价的前端实现顶替那次网络请求：拦截 fetch('…/actions')，
-   在同一页面内用 localStorage 完成全部读写，返回与 actions.ts 完全相同的数据结构。
+   用 localStorage 做本机缓存、用 Supabase 免费版做云端那一本账，返回与
+   actions.ts 完全相同的数据结构。
    App 的界面、路由、权限、审批流、报表逻辑一行未改。
    ========================================================================== */
 (function () {
@@ -313,6 +314,9 @@
   }
 
   var memoryStore = null; // localStorage 不可用时的兜底（关页面即丢）
+
+  // 先留住原生 fetch：云端同步要用它，后面 window.fetch 会被本文件接管
+  var nativeFetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
 
   function readRaw() {
     if (!storageOK) return memoryStore;
@@ -583,6 +587,356 @@
       // 只在面板上提示，不打断 App 使用
       window.__zihanStorageWarn = true;
     }
+    cloudMarkDirty();
+  }
+
+  /* ------------------------------------------------- 云端同步（Supabase） */
+
+  /*
+    免费版 Supabase 当「一本账的中转站」用：一行 id='zihan_main'，data 里就是整本 db。
+    - 启动：先拉云端。云端有数据就以云端为准覆盖本机；云端还没有这一行，就用本机
+      干净的空账本（0 会员 / 0 流水 / 0 店员 / 老板 PIN 8888）初始化云端。
+    - 写入：每次 persist()（新增会员、充值、消费、审批、改 PIN、加店员、改套餐、
+      恢复备份、清空数据…）后，把最新 db 推上去（merge-duplicates，后写覆盖前写）。
+    - 跨设备：页面可见时每 8 秒看一眼云端 updated_at，变了就拉全量、覆盖本机、
+      温和刷新界面（重新拉当前视图数据，不打断正在填写的表单）。
+    - 离线：任何网络失败都不阻塞打开和使用，改动先留在本机，联网后自动补推。
+  */
+  var CLOUD = {
+    url: 'https://xdsbvbzfttaqyspkkvzx.supabase.co',
+    key: 'sb_publishable_1h1hgAdeYbz31trvgTUEYg_HVcXY6Kd',
+    table: 'zihan_store_state',
+    row: 'zihan_main',
+    pollMs: 8000,
+    pullTimeoutMs: 7000,
+    pushTimeoutMs: 15000
+  };
+
+  var cloud = {
+    ready: false,   // 首次云端拉取是否已经有结果（成功或失败都算，不阻塞 App）
+    state: 'init',  // init | syncing | synced | offline
+    lastSyncAt: null,
+    cloudMs: 0,     // 最近一次已知的云端 updated_at（毫秒）
+    dirty: false,   // 本机有还没推上去的改动
+    pushing: null,  // 正在进行的写入 Promise
+    applied: false, // 启动时是否用了云端数据
+    error: '',
+    timer: null,
+    bootPromise: null
+  };
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function clockText(d) {
+    var now = new Date();
+    var sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    return (sameDay ? '' : (d.getMonth() + 1) + '月' + d.getDate() + '日 ') +
+      pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+  }
+
+  function cloudStatusLabel() {
+    if (cloud.state === 'synced') return '云端已同步';
+    if (cloud.state === 'offline') return '离线暂存';
+    return '同步中…';
+  }
+
+  function cloudInfo() {
+    return {
+      state: cloud.state,
+      label: cloudStatusLabel(),
+      ready: cloud.ready,
+      dirty: cloud.dirty,
+      lastSyncAt: cloud.lastSyncAt ? cloud.lastSyncAt.toISOString() : null,
+      lastSyncText: cloud.lastSyncAt ? clockText(cloud.lastSyncAt) : '',
+      error: cloud.error || '',
+      online: cloud.state !== 'offline'
+    };
+  }
+
+  function setCloudState(state, err) {
+    if (err !== undefined) cloud.error = err ? String((err && err.message) || err) : '';
+    cloud.state = state;
+    try {
+      window.dispatchEvent(new CustomEvent('zihan-cloud', { detail: cloudInfo() }));
+    } catch (e) { /* 极老的浏览器没有 CustomEvent 构造，面板会走轮询兜底 */ }
+  }
+
+  /* 发一次 REST 请求；超时、断网、HTTP 错误都 reject，调用方自己降级。 */
+  function cloudRequest(method, query, body, timeoutMs) {
+    if (!nativeFetch) return Promise.reject(new Error('fetch 不可用'));
+    var url = CLOUD.url + '/rest/v1/' + CLOUD.table + (query || '');
+    var headers = {
+      apikey: CLOUD.key,
+      Authorization: 'Bearer ' + CLOUD.key,
+      Accept: 'application/json'
+    };
+    var init = { method: method, headers: headers, cache: 'no-store', mode: 'cors' };
+    if (body !== undefined && body !== null) {
+      headers['Content-Type'] = 'application/json';
+      // merge-duplicates：行已存在就更新，不存在就插入
+      headers.Prefer = 'resolution=merge-duplicates,return=representation';
+      init.body = JSON.stringify(body);
+    }
+    var ac = null;
+    try { if (typeof AbortController === 'function') ac = new AbortController(); } catch (e) { ac = null; }
+    if (ac) init.signal = ac.signal;
+
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var timer = null;
+      function finish(fn, value) {
+        if (done) return;
+        done = true;
+        if (timer) clearTimeout(timer);
+        fn(value);
+      }
+      if (ac) {
+        timer = setTimeout(function () {
+          try { ac.abort(); } catch (e) { /* ignore */ }
+          finish(reject, new Error('timeout'));
+        }, timeoutMs || 12000);
+      }
+      var p;
+      try {
+        p = nativeFetch(url, init);
+      } catch (e) {
+        finish(reject, e);
+        return;
+      }
+      p.then(function (res) {
+        return res.text().then(function (text) {
+          var payload = null;
+          try { payload = text ? JSON.parse(text) : null; } catch (e) { payload = null; }
+          if (!res.ok) {
+            var msg = (payload && (payload.message || payload.hint || payload.error)) || ('HTTP ' + res.status);
+            finish(reject, new Error(String(msg)));
+            return;
+          }
+          finish(resolve, payload);
+        });
+      }).catch(function (err) { finish(reject, err); });
+    });
+  }
+
+  /* 把云端一行写进本机：覆盖 db、落 localStorage（不回推），记下云端时间戳。 */
+  function applyCloudRow(row) {
+    var next = normalize(row.data);
+    if (!next.seeded) next.seeded = true;
+    if (!next.settings.boss_pin) next.settings.boss_pin = '8888';
+    if (!next.settings.boss_recovery_phrase) next.settings.boss_recovery_phrase = '紫涵美发';
+    if (!next.settings.demo_purge_v2) next.settings.demo_purge_v2 = 'done';
+    db = next;
+    writeRaw(JSON.stringify(db));
+    cloud.cloudMs = Date.parse(row.updated_at) || 0;
+    cloud.lastSyncAt = new Date();
+    cloud.applied = true;
+  }
+
+  var pushTimer = null;
+  function scheduleCloudPush(delay) {
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(function () {
+      pushTimer = null;
+      cloudSend();
+    }, delay || 0);
+  }
+
+  function cloudMarkDirty() {
+    // 启动那一次云端拉取还没回来时不推：本机此刻的 db 只是缓存或空账本，
+    // 推上去会把云端那本真账冲掉。
+    if (!cloud.ready) return;
+    cloud.dirty = true;
+    scheduleCloudPush(180);
+  }
+
+  /* 把整本 db 推上去。同一时刻只允许一个写入在飞，期间的新改动会合并成下一次。 */
+  function cloudSend() {
+    if (cloud.pushing) {
+      cloud.dirty = true;
+      return cloud.pushing;
+    }
+    if (!cloud.ready) return Promise.resolve(false);
+    cloud.dirty = false;
+    var body = {
+      id: CLOUD.row,
+      data: JSON.parse(JSON.stringify(db)),
+      updated_at: new Date().toISOString()
+    };
+    setCloudState('syncing');
+    var p = cloudRequest('POST', '?on_conflict=id', body, CLOUD.pushTimeoutMs).then(function (rows) {
+      cloud.pushing = null;
+      var row = rows && rows[0] ? rows[0] : null;
+      if (row && row.updated_at) {
+        var ms = Date.parse(row.updated_at) || 0;
+        if (ms) cloud.cloudMs = ms;
+      }
+      cloud.lastSyncAt = new Date();
+      if (cloud.dirty) {
+        scheduleCloudPush(0);
+        setCloudState('syncing');
+      } else {
+        setCloudState('synced');
+      }
+      return true;
+    }).catch(function (err) {
+      cloud.pushing = null;
+      cloud.dirty = true; // 留在队列里，下次轮询 / 联网事件再推
+      setCloudState('offline', err);
+      return false;
+    });
+    cloud.pushing = p;
+    return p;
+  }
+
+  /* 拉全量（只在发现云端 updated_at 变了时调用）。 */
+  function cloudPull() {
+    return cloudRequest('GET', '?id=eq.' + CLOUD.row + '&select=data,updated_at', null, CLOUD.pullTimeoutMs)
+      .then(function (rows) {
+        var row = rows && rows[0] ? rows[0] : null;
+        if (!row || !row.data || typeof row.data !== 'object') return false;
+        var ms = Date.parse(row.updated_at) || 0;
+        if (ms && ms === cloud.cloudMs) return false; // 就是自己刚写的那一版
+        applyCloudRow(row);
+        setCloudState('synced');
+        refreshUI(0);
+        return true;
+      })
+      .catch(function (err) {
+        setCloudState('offline', err);
+        return false;
+      });
+  }
+
+  /* 每 8 秒的轻量检查：只取 updated_at，变了才拉全量。 */
+  function cloudPoll() {
+    if (!cloud.ready) return;
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+    if (cloud.pushing) return;
+    if (cloud.dirty) { cloudSend(); return; }
+    cloudRequest('GET', '?id=eq.' + CLOUD.row + '&select=updated_at', null, CLOUD.pullTimeoutMs)
+      .then(function (rows) {
+        var row = rows && rows[0] ? rows[0] : null;
+        if (!row || !row.updated_at) return;
+        var ms = Date.parse(row.updated_at) || 0;
+        if (!ms || ms === cloud.cloudMs) return;
+        return cloudPull();
+      })
+      .catch(function (err) { setCloudState('offline', err); });
+  }
+
+  function cloudStartTimers() {
+    if (cloud.timer) return;
+    cloud.timer = setInterval(cloudPoll, CLOUD.pollMs);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') cloudPoll();
+    });
+    window.addEventListener('focus', function () { cloudPoll(); });
+    window.addEventListener('online', function () {
+      if (!cloud.ready) return;
+      if (cloud.dirty) cloudSend();
+      else cloudPoll();
+    });
+  }
+
+  /* 启动同步：先拉云端；云端有数据就以云端为准，没有就用本机初始化云端。 */
+  function cloudStart() {
+    if (cloud.bootPromise) return cloud.bootPromise;
+    setCloudState('syncing');
+    cloudStartTimers();
+    cloud.bootPromise = cloudRequest('GET', '?id=eq.' + CLOUD.row + '&select=data,updated_at', null, CLOUD.pullTimeoutMs)
+      .then(function (rows) {
+        var row = rows && rows[0] ? rows[0] : null;
+        cloud.ready = true;
+        if (row && row.data && typeof row.data === 'object') {
+          applyCloudRow(row);
+          cloud.dirty = false;
+          setCloudState('synced');
+          return 'cloud';
+        }
+        // 云端是空的（还没这一行，或 data 坏了）：本机账本初始化云端
+        cloud.dirty = true;
+        cloudSend();
+        return 'local';
+      })
+      .catch(function (err) {
+        cloud.ready = true; // 离线也要能打开，用本机 localStorage 照常记账
+        setCloudState('offline', err);
+        return 'offline';
+      });
+    return cloud.bootPromise;
+  }
+
+  /* 面板上的「立即同步」：先补推本机改动，再拉一次云端。 */
+  function cloudSyncNow() {
+    var start = cloud.ready ? Promise.resolve() : (cloud.bootPromise || cloudStart());
+    return start.then(function () {
+      cloud.dirty = true;
+      return cloudSend();
+    }).then(function () {
+      cloudPoll();
+      return cloudInfo();
+    });
+  }
+
+  /* ---------------------------------------------------- 跨设备后温和刷新界面 */
+
+  /*
+    App 用的是 SDK 里的 react-query（staleTime 30s、refetchOnWindowFocus 关），
+    一次云端更新过来，缓存里的数字不会自己变。这里顺着 React 18 挂在根节点上的
+    fiber 找到 QueryClientProvider 的 client，调 invalidateQueries() 让当前视图
+    重新拉数据——只换数据，不重建页面、不动弹窗里的表单。
+    找不到（React 版本变了）就退一步：派发 online / focus 事件碰碰运气。
+  */
+  function findQueryClient() {
+    try {
+      var el = document.querySelector('[data-generated-space-root]');
+      if (!el) return null;
+      var key = null;
+      for (var k in el) {
+        if (k.indexOf('__reactContainer$') === 0) { key = k; break; }
+      }
+      if (!key) return null;
+      var start = el[key];
+      var fiber = start && start.current ? start.current : start;
+      var queue = fiber ? [fiber] : [];
+      var seen = 0;
+      while (queue.length && seen < 6000) {
+        var f = queue.shift();
+        seen += 1;
+        if (!f) continue;
+        var props = f.memoizedProps;
+        if (props && props.client && typeof props.client.invalidateQueries === 'function') return props.client;
+        if (f.child) queue.push(f.child);
+        if (f.sibling) queue.push(f.sibling);
+      }
+    } catch (e) { /* 取不到就返回 null */ }
+    return null;
+  }
+
+  function userIsTyping() {
+    try {
+      var a = document.activeElement;
+      if (!a) return false;
+      var tag = (a.tagName || '').toUpperCase();
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    } catch (e) { return false; }
+  }
+
+  function refreshUI(attempt) {
+    if (typeof document === 'undefined') return;
+    // 正在输入时不换列表，2 秒后再试；最多试 5 次，不无限等
+    if (userIsTyping() && (attempt || 0) < 5) {
+      setTimeout(function () { refreshUI((attempt || 0) + 1); }, 2000);
+      return;
+    }
+    var client = findQueryClient();
+    if (client) {
+      try {
+        client.invalidateQueries();
+        return;
+      } catch (e) { /* 落到下面的兜底 */ }
+    }
+    try { window.dispatchEvent(new Event('online')); } catch (e) { /* ignore */ }
   }
 
   /* ------------------------------------------------------------------ 工具 */
@@ -1409,7 +1763,22 @@
     };
   }
 
-  var nativeFetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
+  /* 跑一个动作（同步拿到结果，包成和原版一样的 Response）。 */
+  function runAction(action, args) {
+    var fn = ACTIONS[action];
+    if (!fn) {
+      console.error('[zihan-local] 未知动作：' + action);
+      return jsonResponse({ error: { code: 'UNKNOWN_ACTION', message: '未知动作 ' + action } }, 400);
+    }
+    var result;
+    try {
+      result = fn(args);
+    } catch (err) {
+      console.error('[zihan-local] 动作 ' + action + ' 出错', err);
+      return jsonResponse({ error: { code: 'INTERNAL', message: String(err && err.message || err) } }, 500);
+    }
+    return jsonResponse({ data: result });
+  }
 
   window.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : (input && input.url) || '';
@@ -1428,24 +1797,20 @@
     }
     var action = req.action;
     var args = req.args || {};
-    var fn = ACTIONS[action];
-    if (!fn) {
-      console.error('[zihan-local] 未知动作：' + action);
-      return Promise.resolve(jsonResponse({ error: { code: 'UNKNOWN_ACTION', message: '未知动作 ' + action } }, 400));
+    // 头一次请求：等云端那本账拉回来再作答，界面一打开就是同一本账。
+    // 拉取失败/超时（离线）也会 resolve，照常用本机 localStorage，不阻塞打开。
+    if (!cloud.ready && cloud.bootPromise) {
+      return cloud.bootPromise.then(function () {
+        return runAction(action, args);
+      });
     }
-    var result;
-    try {
-      result = fn(args);
-    } catch (err) {
-      console.error('[zihan-local] 动作 ' + action + ' 出错', err);
-      return Promise.resolve(jsonResponse({ error: { code: 'INTERNAL', message: String(err && err.message || err) } }, 500));
-    }
-    return Promise.resolve(jsonResponse({ data: result }));
+    return Promise.resolve(runAction(action, args));
   };
 
   /* ------------------------------------------------------------- 对外接口 */
 
   boot();
+  cloudStart();
 
   window.__zihanLocal = {
     actions: ACTIONS,
@@ -1459,7 +1824,12 @@
     seedExamples: function () { return ACTIONS.seedExamples({}); },
     resetAll: resetAll,
     stats: stats,
-    raw: function () { return db; }
+    raw: function () { return db; },
+    // 云端同步：面板读状态、点「立即同步」、写完等同步落云端再重载页面
+    cloudInfo: cloudInfo,
+    cloudSyncNow: cloudSyncNow,
+    cloudReady: function () { return cloud.ready; },
+    cloudPull: cloudPull
   };
 })();
 
@@ -1477,6 +1847,19 @@
 
   var open = false;
   var root = null;
+  var launchBtn = null;
+
+  function paintCloud(info) {
+    if (!launchBtn) return;
+    var label = launchBtn.querySelector('#zh-cloud-label');
+    if (!label) return;
+    var ci = info || (L.cloudInfo ? L.cloudInfo() : null);
+    if (!ci) { label.textContent = '本地数据'; return; }
+    label.textContent = ci.label;
+    launchBtn.setAttribute('data-cloud-state', ci.state);
+    launchBtn.setAttribute('aria-label', '数据与同步：' + ci.label + (ci.lastSyncText ? '，最近同步 ' + ci.lastSyncText : ''));
+    launchBtn.title = ci.lastSyncText ? '最近同步 ' + ci.lastSyncText : '';
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -1521,6 +1904,7 @@
     'box-shadow:0 4px 16px rgba(74,66,88,.12);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);',
     'font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;cursor:pointer;min-height:36px}',
     '#zh-local-launch:active{transform:scale(.97)}',
+    '#zh-local-launch .zh-cloud-glyph{font-size:13px;line-height:1;margin-top:-1px}',
     '#zh-local-mask{position:fixed;inset:0;z-index:70;background:rgba(40,34,52,.42);display:flex;align-items:flex-end;',
     'justify-content:center;padding:0;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}',
     '@media (min-width:640px){#zh-local-mask{align-items:center;padding:24px}}',
@@ -1553,6 +1937,12 @@
     'font-size:12px;line-height:1.6;margin-bottom:12px}',
     '.zh-ok{background:#f0f8f3;border:1px solid #d5e9de;color:#2f7d55;border-radius:12px;padding:9px 12px;',
     'font-size:12px;line-height:1.6;margin-bottom:12px}',
+    '.zh-cloud{display:flex;align-items:center;gap:8px;margin:2px 0 8px}',
+    '.zh-cloud b{font-size:14px;font-weight:800;color:#4a4258}',
+    '.zh-dot{width:9px;height:9px;border-radius:50%;background:#9b93ad;flex:none}',
+    '.zh-dot.ok{background:#4fae7d;box-shadow:0 0 0 3px rgba(79,174,125,.16)}',
+    '.zh-dot.sync{background:#c9a13b;box-shadow:0 0 0 3px rgba(201,161,59,.16)}',
+    '.zh-dot.off{background:#c06a5b;box-shadow:0 0 0 3px rgba(192,106,91,.16)}',
     '.zh-hide{display:none !important}'
   ].join('');
 
@@ -1586,6 +1976,24 @@
     return clone.textContent.indexOf('查我的余额') >= 0;
   }
 
+  function cloudBlock() {
+    var ci = L.cloudInfo ? L.cloudInfo() : null;
+    if (!ci) return '';
+    var dot = ci.state === 'synced' ? 'ok' : ci.state === 'offline' ? 'off' : 'sync';
+    var when = ci.lastSyncText ? '最近同步：<b>' + esc(ci.lastSyncText) + '</b>' : '还没跟云端对上过';
+    var extra = ci.state === 'offline'
+      ? '现在连不上云端，改动先存在这台设备上，联网后会自动补上。'
+      : (ci.dirty ? '本机还有改动正要上传…' : '店里 iPad 和老板手机打开就是同一本账，不用手动导入。');
+    return '<div class="zh-sec" id="zh-cloud-block" style="margin-top:14px">' +
+      '<h3>云端同步</h3>' +
+      '<div class="zh-cloud"><span class="zh-dot ' + dot + '"></span><b>' + esc(ci.label) + '</b></div>' +
+      '<p>' + when + ' · ' + extra + '</p>' +
+      '<div class="zh-btns">' +
+        '<button class="zh-btn" type="button" data-zh="sync">立即同步</button>' +
+      '</div>' +
+    '</div>';
+  }
+
   function sheetHTML() {
     var st = L.stats();
     var demo = st.demoMembers;
@@ -1596,8 +2004,8 @@
       warn = '<div class="zh-warn">这个浏览器不允许本地存储（可能是无痕模式）。现在录入的会员和流水关掉页面就会丢，请换普通窗口打开，或先导出备份。</div>';
     }
     return '' +
-      '<div class="zh-h"><h2>本地数据</h2><button class="zh-x" type="button" data-zh="close" aria-label="关闭">×</button></div>' +
-      '<p class="zh-sub">所有会员、流水、审批都只存在这台设备的浏览器里，不联网、不上传。清理浏览器数据或换手机会丢，记得定期导出备份。</p>' +
+      '<div class="zh-h"><h2>数据与同步</h2><button class="zh-x" type="button" data-zh="close" aria-label="关闭">×</button></div>' +
+      '<p class="zh-sub">会员、流水、审批先存这台设备，同时实时同步到云端。老板手机和店里 iPad 打开就是同一本账，一台刚记完，另一台几秒内自己刷新。</p>' +
       warn +
       '<div class="zh-stats">' +
         '<div class="zh-stat"><small>会员</small><b>' + st.members + ' 位</b></div>' +
@@ -1606,9 +2014,11 @@
         '<div class="zh-stat"><small>待审批</small><b>' + st.pending + ' 笔</b></div>' +
       '</div>' +
 
-      '<div class="zh-sec">' +
+      cloudBlock() +
+
+      '<div class="zh-sec" style="margin-top:14px">' +
         '<h3>备份与恢复</h3>' +
-        '<p>导出后存到网盘或微信收藏。换手机、清理浏览器数据后，用它一次性恢复全部会员与流水。</p>' +
+        '<p>云端已经同步，备份是第二道保险：导出后存到网盘或微信收藏，万一云端出问题也能一次性恢复全部会员与流水。</p>' +
         '<div class="zh-btns">' +
           '<button class="zh-btn pri" type="button" data-zh="export">导出 JSON 备份</button>' +
           '<button class="zh-btn" type="button" data-zh="import">恢复 JSON 备份</button>' +
@@ -1650,6 +2060,17 @@
     root.querySelector('#zh-local-sheet').innerHTML = sheetHTML();
   }
 
+  /* 同步状态变了只换那一块，不动面板其它部分（不丢滚动位置） */
+  function refreshCloudBlock() {
+    if (!root) return;
+    var old = root.querySelector('#zh-cloud-block');
+    if (!old) return;
+    var wrap = document.createElement('div');
+    wrap.innerHTML = cloudBlock();
+    var fresh = wrap.firstElementChild;
+    if (fresh && old.parentNode) old.parentNode.replaceChild(fresh, old);
+  }
+
   function close() {
     if (!root) return;
     root.remove();
@@ -1679,6 +2100,7 @@
       if (act === 'close') { close(); return; }
       if (act === 'export') { doExport(); return; }
       if (act === 'import') { pickImport(); return; }
+      if (act === 'sync') { doSync(); return; }
       if (act === 'demo') { doClearDemo(); return; }
       if (act === 'seed') { doSeedDemo(); return; }
       if (act === 'reset') { doReset(); return; }
@@ -1699,6 +2121,43 @@
     var h = sheet.querySelector('.zh-h');
     if (h && h.parentNode) h.parentNode.insertBefore(box, h.nextSibling.nextSibling);
     setTimeout(function () { if (box.parentNode) box.remove(); }, 3200);
+  }
+
+  function doSync() {
+    if (!L.cloudSyncNow) { flash('这个版本没有云端同步。', 'bad'); return; }
+    flash('正在跟云端对账…', 'ok');
+    L.cloudSyncNow().then(function (info) {
+      render();
+      if (info && info.state === 'offline') {
+        flash('连不上云端，改动先存在本机，联网后会自动补上。', 'bad');
+      } else {
+        flash('已同步' + (info && info.lastSyncText ? '（' + info.lastSyncText + '）' : '') + '。', 'ok');
+      }
+    }, function () {
+      render();
+      flash('同步失败：连不上云端，改动已暂存在本机。', 'bad');
+    });
+  }
+
+  /* 写完之后先等改动推上云端，再重载页面；网络卡住也不让用户干等。 */
+  function syncThenReload() {
+    var done = false;
+    function go() {
+      if (done) return;
+      done = true;
+      window.location.reload();
+    }
+    try {
+      var p = L.cloudSyncNow ? L.cloudSyncNow() : null;
+      if (p && typeof p.then === 'function') {
+        p.then(function () { setTimeout(go, 120); }, function () { setTimeout(go, 120); });
+      } else {
+        setTimeout(go, 300);
+      }
+    } catch (e) {
+      setTimeout(go, 300);
+    }
+    setTimeout(go, 7000);
   }
 
   function doExport() {
@@ -1752,8 +2211,8 @@
       if (!ok) return;
       try {
         var res = L.importBackup(data);
-        window.alert('恢复完成：' + res.members + ' 位会员、' + res.transactions + ' 条流水。页面会重新加载。');
-        window.location.reload();
+        window.alert('恢复完成：' + res.members + ' 位会员、' + res.transactions + ' 条流水。正在同步到云端，页面随后重新加载。');
+        syncThenReload();
       } catch (err2) {
         flash('恢复失败：' + (err2 && err2.message ? err2.message : err2), 'bad');
       }
@@ -1769,7 +2228,7 @@
     L.clearDemo();
     render();
     flash('示例数据已清除，可以开始录真实会员了。', 'ok');
-    setTimeout(function () { window.location.reload(); }, 900);
+    syncThenReload();
   }
 
   function doSeedDemo() {
@@ -1777,14 +2236,16 @@
     L.seedExamples();
     render();
     flash('示例数据已载入，可以先到处点着看看。', 'ok');
-    setTimeout(function () { window.location.reload(); }, 900);
+    syncThenReload();
   }
 
   function doReset() {
-    if (!window.confirm('清空这台设备上的全部会员、流水和审批？\n\n清空后只能用备份文件找回，确定继续？')) return;
+    if (!window.confirm('清空云端和这台设备上的全部会员、流水和审批？\n\n另一台设备几秒内也会变成空账本，清空后只能用备份文件找回，确定继续？')) return;
     if (!window.confirm('最后确认：真的要清空吗？')) return;
     L.resetAll();
-    window.location.reload();
+    render();
+    flash('已清空，正在同步到云端…', 'ok');
+    syncThenReload();
   }
 
   /* ---------------------------------------------------------------- 启动 */
@@ -1795,19 +2256,26 @@
     var btn = document.createElement('button');
     btn.id = 'zh-local-launch';
     btn.type = 'button';
-    btn.setAttribute('aria-label', '本地数据与备份');
+    btn.setAttribute('aria-label', '数据与同步');
     btn.innerHTML =
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
-      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-      '<ellipse cx="12" cy="5.5" rx="7.5" ry="3"/><path d="M4.5 5.5v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"/>' +
-      '<path d="M4.5 11.5v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"/></svg>' +
-      '<span>本地数据</span>';
+      '<span class="zh-cloud-glyph" aria-hidden="true">☁️</span>' +
+      '<span id="zh-cloud-label">同步中…</span>';
     btn.addEventListener('click', openPanel);
     document.body.appendChild(btn);
+    launchBtn = btn;
+    paintCloud();
 
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && open) close();
     });
+
+    // 同步状态一变就换胶囊文案（引擎每改一次状态会派发 zihan-cloud）
+    window.addEventListener('zihan-cloud', function (e) {
+      paintCloud(e && e.detail);
+      refreshCloudBlock();
+    });
+    // 兜底：每 2 秒对一次，就算事件没收到也不会一直停在「同步中…」
+    setInterval(function () { paintCloud(); }, 2000);
   }
 
   if (document.readyState === 'loading') {

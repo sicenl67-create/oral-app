@@ -20,7 +20,35 @@
   <style>
 :root{--buncss-light:initial;--buncss-dark: ;color-scheme:light dark;--twsa-safe-area-inset-top:env(safe-area-inset-top,0px);--twsa-safe-area-inset-right:env(safe-area-inset-right,0px);--twsa-safe-area-inset-bottom:env(safe-area-inset-bottom,0px);--twsa-safe-area-inset-left:env(safe-area-inset-left,0px)}@media (prefers-color-scheme:dark){:root{--buncss-light: ;--buncss-dark:initial}}html,[data-generated-space-root]{height:100%;min-height:100%}[data-generated-space-root]{overflow:auto;position:fixed;scrollbar-width:none;inset:0}.hatch-space-root[data-hatch-space-root]{--hatch-space-bottom-padding:calc(var(--bottom-padding,0px) + env(safe-area-inset-bottom,0px));box-sizing:border-box;min-height:calc(100% + var(--header-height,0px) + var(--hatch-space-bottom-padding));min-height:calc(100dvh + var(--header-height,0px) + var(--hatch-space-bottom-padding));padding-top:var(--header-height,0px);padding-bottom:var(--hatch-space-bottom-padding);background:var(--bg,#f4f7fb);color:var(--text,#0f172a)}@media (prefers-color-scheme:dark){:root:not([data-hatch-host-theme][data-hatch-color-scheme=light]) .hatch-space-root[data-hatch-space-root]{background:var(--bg,#0c111b);color:var(--text,#e5eef9)}}:root[data-hatch-host-theme][data-hatch-color-scheme=dark] .hatch-space-root[data-hatch-space-root]{background:var(--bg,#0c111b);color:var(--text,#e5eef9)}[data-generated-space-root]::-webkit-scrollbar{display:none}/*! tailwindcss v4.0.9 | MIT License | https://tailwindcss.com */@layer theme,base,components,utilities;@layer theme{:root,:host{--color-red-300:oklch(80.8% .114 19.571);--color-red-700:oklch(50.5% .213 27.518);--color-amber-100:oklch(96.2% .059 95.617);--color-amber-200:oklch(92.4% .12 95.746);--color-amber-300:oklch(87.9% .169 91.605);--color-amber-700:oklch(55.5% .163 48.998);--color-amber-900:oklch(41.4% .112 45.904);--color-teal-200:oklch(91% .096 180.426);--color-teal-300:oklch(85.5% .138 181.071);--color-teal-700:oklch(51.1% .096 186.391);--color-teal-800:oklch(43.7% .078 188.216);--color-sky-300:oklch(82.8% .111 230.318);--color-sky-700:oklch(50% .134 242.749);--color-black:#000;--color-white:#fff;--spacing:.25rem;--container-md:28rem;--container-2xl:42rem;--text-xs:12px;--text-xs--line-height:16px;--text-sm:14px;--text-sm--line-height:20px;--text-base:16px;--text-base--line-height:24px;--text-lg:18px;--text-lg--line-height:28px;--text-xl:20px;--text-xl--line-height:28px;--text-2xl:24px;--text-2xl--line-height:32px;--text-3xl:30px;--text-3xl--line-height:36px;--text-4xl:36px;--text-4xl--line-height:40px;--font-weight-normal:400;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--tracking-wide:.025em;--tracking-widest:.1em;--leading-relaxed:1.625;--radius-lg:.5rem;--radius-xl:.75rem;--radius-2xl:1rem;--ease-in:cubic-bezier(.4,0,1,1);--ease-out:cubic-bezier(0,0,.2,1);--ease-in-out:cubic-bezier(.4,0,.2,1);--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4,0,.2,1)}}@layer base{*,:after,:before{box-sizing:border-box;border:0 solid;margin:0;padding:0}::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::-webkit-file-upload-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;font-feature-settings:initial;font-variation-settings:initial;-webkit-tap-highlight-color:transparent;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;line-height:1.5}hr{color:inherit;border-top-width:1px;height:0}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-feature-settings:initial;font-variation-settings:initial;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-size:1em}small{font-size:80%}sub,sup{position:relative;vertical-align:baseline;font-size:75%;line-height:0}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring{outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::-webkit-file-upload-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:-webkit-any([multiple],[size])) optgroup{font-weight:bolder}:where(select:-moz-any([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:-webkit-any([multiple],[size])) optgroup option{padding-inline-start:20px}:where(select:-moz-any([multiple],[size])) optgroup option{padding-inline-start:20px}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::-webkit-file-upload-button{margin-inline-end:4px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports ( not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px){::placeholder{color:color-mix(in oklab,currentcolor 50%,transparent)}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{text-align:inherit;min-height:1lh}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block-start:0;padding-block-end:0}::-webkit-datetime-edit-year-field{padding-block-start:0;padding-block-end:0}::-webkit-datetime-edit-month-field{padding-block-start:0;padding-block-end:0}::-webkit-datetime-edit-day-field{padding-block-start:0;padding-block-end:0}::-webkit-datetime-edit-hour-field{padding-block-start:0;padding-block-end:0}::-webkit-datetime-edit-minute-field{padding-block-start:0;padding-block-end:0}::-webkit-datetime-edit-second-field{padding-block-start:0;padding-block-end:0}::-webkit-datetime-edit-millisecond-field{padding-block-start:0;padding-block-end:0}::-webkit-datetime-edit-meridiem-field{padding-block-start:0;padding-block-end:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button{appearance:button}input:where([type=button],[type=reset],[type=submit]){appearance:button}::-webkit-file-upload-button{appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer utilities{.\!visible{visibility:visible!important}.invisible{visibility:hidden}.visible{visibility:visible}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.static{position:static}.sticky{position:sticky}.inset-0{inset:calc(var(--spacing)*0)}.top-0{top:calc(var(--spacing)*0)}.z-40{z-index:40}.z-50{z-index:50}.col-span-2{grid-column:span 2/span 2}.\!container{width:100%!important}@media (min-width:40rem){.\!container{max-width:40rem!important}}@media (min-width:48rem){.\!container{max-width:48rem!important}}@media (min-width:64rem){.\!container{max-width:64rem!important}}@media (min-width:80rem){.\!container{max-width:80rem!important}}@media (min-width:96rem){.\!container{max-width:96rem!important}}.container{width:100%}@media (min-width:40rem){.container{max-width:40rem}}@media (min-width:48rem){.container{max-width:48rem}}@media (min-width:64rem){.container{max-width:64rem}}@media (min-width:80rem){.container{max-width:80rem}}@media (min-width:96rem){.container{max-width:96rem}}.mx-auto{margin-inline-start:auto;margin-inline-end:auto}.mt-0\.5{margin-top:calc(var(--spacing)*.5)}.mt-1{margin-top:calc(var(--spacing)*1)}.mt-2{margin-top:calc(var(--spacing)*2)}.mt-3{margin-top:calc(var(--spacing)*3)}.mt-4{margin-top:calc(var(--spacing)*4)}.mt-5{margin-top:calc(var(--spacing)*5)}.mt-6{margin-top:calc(var(--spacing)*6)}.mt-8{margin-top:calc(var(--spacing)*8)}.mb-3{margin-bottom:calc(var(--spacing)*3)}.mb-4{margin-bottom:calc(var(--spacing)*4)}.ml-auto{margin-left:auto}.block{display:block}.contents{display:contents}.flex{display:flex}.grid{display:grid}.hidden{display:none}.inline{display:inline}.inline-block{display:inline-block}.h-9{height:calc(var(--spacing)*9)}.h-60{height:calc(var(--spacing)*60)}.h-full{height:100%}.max-h-\[92vh\]{max-height:92vh}.min-h-screen{min-height:100vh}.w-9{width:calc(var(--spacing)*9)}.w-20{width:calc(var(--spacing)*20)}.w-full{width:100%}.max-w-2xl{max-width:var(--container-2xl)}.max-w-md{max-width:var(--container-md)}.min-w-0{min-width:calc(var(--spacing)*0)}.flex-1{flex:1}.shrink-0{flex-shrink:0}.transform{transform:var(--tw-rotate-x)var(--tw-rotate-y)var(--tw-rotate-z)var(--tw-skew-x)var(--tw-skew-y)}.resize{resize:both}.list-disc{list-style-type:disc}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.flex-wrap{flex-wrap:wrap}.items-center{align-items: center}.items-end{align-items: flex-end}.items-start{align-items: flex-start}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.gap-1{gap:calc(var(--spacing)*1)}.gap-2{gap:calc(var(--spacing)*2)}.gap-3{gap:calc(var(--spacing)*3)}.gap-4{gap:calc(var(--spacing)*4)}.gap-6{gap:calc(var(--spacing)*6)}:where(.space-y-1\.5>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*1.5)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*1.5)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-2>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*2)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*2)*calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-3>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing)*3)*var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing)*3)*calc(1 - var(--tw-space-y-reverse)))}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.overflow-y-auto{overflow-y:auto}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:var(--radius-2xl)}.rounded-full{border-radius:3.40282e38px}.rounded-lg{border-radius:var(--radius-lg)}.rounded-xl{border-radius:var(--radius-xl)}.rounded-t-2xl{border-top-left-radius:var(--radius-2xl);border-top-right-radius:var(--radius-2xl)}.border{border-style:var(--tw-border-style);border-width:1px}.border-2{border-style:var(--tw-border-style);border-width:2px}.border-t{border-top-style:var(--tw-border-style);border-top-width:1px}.border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}.border-dashed{--tw-border-style:dashed;border-style:dashed}.border-\[var\(--accent\)\]{border-color:var(--accent)}.border-\[var\(--accent-pale\)\]{border-color:var(--accent-pale)}.border-\[var\(--border\)\]{border-color:var(--border)}.bg-\[var\(--accent\)\]{background-color:var(--accent)}.bg-\[var\(--bg\)\]{background-color:var(--bg)}.bg-\[var\(--surface\)\]{background-color:var(--surface)}.bg-\[var\(--surface\)\]\/85{background-color:color-mix(in oklab,var(--surface)85%,transparent)}.bg-amber-100{background-color:var(--color-amber-100)}.bg-amber-700\/10{background-color:color-mix(in oklab,var(--color-amber-700)10%,transparent)}.bg-black\/45{background-color:color-mix(in oklab,var(--color-black)45%,transparent)}.bg-red-700{background-color:var(--color-red-700)}.bg-red-700\/10{background-color:color-mix(in oklab,var(--color-red-700)10%,transparent)}.bg-sky-700\/10{background-color:color-mix(in oklab,var(--color-sky-700)10%,transparent)}.bg-teal-700\/5{background-color:color-mix(in oklab,var(--color-teal-700)5%,transparent)}.bg-teal-700\/10{background-color:color-mix(in oklab,var(--color-teal-700)10%,transparent)}.p-3{padding:calc(var(--spacing)*3)}.p-4{padding:calc(var(--spacing)*4)}.p-5{padding:calc(var(--spacing)*5)}.px-2{padding-inline:calc(var(--spacing)*2)}.px-2\.5{padding-inline:calc(var(--spacing)*2.5)}.px-3{padding-inline:calc(var(--spacing)*3)}.px-4{padding-inline:calc(var(--spacing)*4)}.py-0\.5{padding-block:calc(var(--spacing)*.5)}.py-1{padding-block:calc(var(--spacing)*1)}.py-1\.5{padding-block:calc(var(--spacing)*1.5)}.py-2{padding-block:calc(var(--spacing)*2)}.py-2\.5{padding-block:calc(var(--spacing)*2.5)}.py-3{padding-block:calc(var(--spacing)*3)}.py-4{padding-block:calc(var(--spacing)*4)}.pt-2{padding-top:calc(var(--spacing)*2)}.pt-3{padding-top:calc(var(--spacing)*3)}.pt-6{padding-top:calc(var(--spacing)*6)}.pt-8{padding-top:calc(var(--spacing)*8)}.pt-safe{padding-top:var(--twsa-safe-area-inset-top)}.pb-2{padding-bottom:calc(var(--spacing)*2)}.pb-10{padding-bottom:calc(var(--spacing)*10)}.pb-safe{padding-bottom:var(--twsa-safe-area-inset-bottom)}.pl-5{padding-left:calc(var(--spacing)*5)}.text-center{text-align:center}.text-left{text-align:left}.text-right{text-align:right}.text-2xl{font-size:var(--text-2xl);line-height:var(--tw-leading,var(--text-2xl--line-height))}.text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}.text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}.text-base{font-size:var(--text-base);line-height:var(--tw-leading,var(--text-base--line-height))}.text-lg{font-size:var(--text-lg);line-height:var(--tw-leading,var(--text-lg--line-height))}.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}.text-xl{font-size:var(--text-xl);line-height:var(--tw-leading,var(--text-xl--line-height))}.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}.leading-relaxed{--tw-leading:var(--leading-relaxed);line-height:var(--leading-relaxed)}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}.font-normal{--tw-font-weight:var(--font-weight-normal);font-weight:var(--font-weight-normal)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.tracking-wide{--tw-tracking:var(--tracking-wide);letter-spacing:var(--tracking-wide)}.tracking-widest{--tw-tracking:var(--tracking-widest);letter-spacing:var(--tracking-widest)}.text-\[var\(--accent\)\]{color:var(--accent)}.text-\[var\(--dim\)\]{color:var(--dim)}.text-\[var\(--text\)\]{color:var(--text)}.text-amber-700{color:var(--color-amber-700)}.text-amber-900{color:var(--color-amber-900)}.text-red-700{color:var(--color-red-700)}.text-sky-700{color:var(--color-sky-700)}.text-teal-700{color:var(--color-teal-700)}.text-teal-800{color:var(--color-teal-800)}.text-white{color:var(--color-white)}.ordinal{--tw-ordinal:ordinal;font-variant-numeric:var(--tw-ordinal,)var(--tw-slashed-zero,)var(--tw-numeric-figure,)var(--tw-numeric-spacing,)var(--tw-numeric-fraction,)}.shadow{--tw-shadow:0 1px 3px 0 var(--tw-shadow-color,#0000001a),0 1px 2px -1px var(--tw-shadow-color,#0000001a);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.ring{--tw-ring-shadow:var(--tw-ring-inset,)0 0 0 calc(1px + var(--tw-ring-offset-width))var(--tw-ring-color,currentColor);box-shadow:var(--tw-inset-shadow),var(--tw-inset-ring-shadow),var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow)}.blur{--tw-blur:blur(8px);filter:var(--tw-blur,)var(--tw-brightness,)var(--tw-contrast,)var(--tw-grayscale,)var(--tw-hue-rotate,)var(--tw-invert,)var(--tw-saturate,)var(--tw-sepia,)var(--tw-drop-shadow,)}.invert{--tw-invert:invert(100%);filter:var(--tw-blur,)var(--tw-brightness,)var(--tw-contrast,)var(--tw-grayscale,)var(--tw-hue-rotate,)var(--tw-invert,)var(--tw-saturate,)var(--tw-sepia,)var(--tw-drop-shadow,)}.filter{filter:var(--tw-blur,)var(--tw-brightness,)var(--tw-contrast,)var(--tw-grayscale,)var(--tw-hue-rotate,)var(--tw-invert,)var(--tw-saturate,)var(--tw-sepia,)var(--tw-drop-shadow,)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur,)var(--tw-backdrop-brightness,)var(--tw-backdrop-contrast,)var(--tw-backdrop-grayscale,)var(--tw-backdrop-hue-rotate,)var(--tw-backdrop-invert,)var(--tw-backdrop-opacity,)var(--tw-backdrop-saturate,)var(--tw-backdrop-sepia,);backdrop-filter:var(--tw-backdrop-blur,)var(--tw-backdrop-brightness,)var(--tw-backdrop-contrast,)var(--tw-backdrop-grayscale,)var(--tw-backdrop-hue-rotate,)var(--tw-backdrop-invert,)var(--tw-backdrop-opacity,)var(--tw-backdrop-saturate,)var(--tw-backdrop-sepia,)}.transition{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to,opacity,box-shadow,transform,translate,scale,rotate,filter,-webkit-backdrop-filter,backdrop-filter;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.ease-in{--tw-ease:var(--ease-in);transition-timing-function:var(--ease-in)}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}.ease-out{--tw-ease:var(--ease-out);transition-timing-function:var(--ease-out)}.safe{--twsa-safe-area-inset-top:env(safe-area-inset-top);--twsa-safe-area-inset-right:env(safe-area-inset-right);--twsa-safe-area-inset-bottom:env(safe-area-inset-bottom);--twsa-safe-area-inset-left:env(safe-area-inset-left)}.last\:border-b-0:last-child{border-bottom-style:var(--tw-border-style);border-bottom-width:0}.disabled\:opacity-40:disabled{opacity:.4}@media (min-width:40rem){.sm\:items-center{align-items: center}}@media (min-width:40rem){.sm\:rounded-2xl{border-radius:var(--radius-2xl)}}@media (prefers-color-scheme:dark){.dark\:bg-amber-900\/30{background-color:color-mix(in oklab,var(--color-amber-900)30%,transparent)}}@media (prefers-color-scheme:dark){.dark\:text-amber-200{color:var(--color-amber-200)}}@media (prefers-color-scheme:dark){.dark\:text-amber-300{color:var(--color-amber-300)}}@media (prefers-color-scheme:dark){.dark\:text-red-300{color:var(--color-red-300)}}@media (prefers-color-scheme:dark){.dark\:text-sky-300{color:var(--color-sky-300)}}@media (prefers-color-scheme:dark){.dark\:text-teal-200{color:var(--color-teal-200)}}@media (prefers-color-scheme:dark){.dark\:text-teal-300{color:var(--color-teal-300)}}}:root{--twsa-safe-area-inset-top:env(safe-area-inset-top);--twsa-safe-area-inset-right:env(safe-area-inset-right);--twsa-safe-area-inset-bottom:env(safe-area-inset-bottom);--twsa-safe-area-inset-left:env(safe-area-inset-left);--buncss-light:initial;--buncss-dark: ;--buncss-light:initial;--buncss-dark: ;color-scheme:light;--bg:#fbf7ee;--surface:#fff;--text:#4a4258;--dim:#8d84a3;--border:#e6ddf2;--accent:#7d6eab;--accent-soft:#d8c8f0;--accent-pale:#c9b8e8;--radius:12px;--space-surface:var(--surface);--space-surface-alt:var(--surface);--space-muted:var(--dim);--space-border:var(--border);--space-accent:var(--accent)}.font-theme-sans{font-family:Noto Sans SC,PingFang SC,Hiragino Sans GB,Microsoft YaHei,sans-serif}.font-calligraphy{font-family:Ma Shan Zheng,Noto Serif SC,Songti SC,serif}.tnum{font-variant-numeric:tabular-nums}.bg-app{background:radial-gradient(120% 55% at 50% -10%,#c8b8e859 0%,#c8b8e800 60%),var(--bg);background-attachment:fixed}.tool-dots{background-image:radial-gradient(#7d6eab21 1.6px,#0000 1.7px);background-size:22px 22px}@layer base{button,[role=button],select,summary,input:not(:-webkit-any([type=checkbox],[type=radio])){min-height:2rem}button,[role=button],select,summary,input:not(:-moz-any([type=checkbox],[type=radio])){min-height:2rem}button,[role=button],select,summary,input:not(:is([type=checkbox],[type=radio])){min-height:2rem}}@property --tw-rotate-x{syntax:"*";inherits:false;initial-value:rotateX(0)}@property --tw-rotate-y{syntax:"*";inherits:false;initial-value:rotateY(0)}@property --tw-rotate-z{syntax:"*";inherits:false;initial-value:rotateZ(0)}@property --tw-skew-x{syntax:"*";inherits:false;initial-value:skewX(0)}@property --tw-skew-y{syntax:"*";inherits:false;initial-value:skewY(0)}@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-tracking{syntax:"*";inherits:false}@property --tw-ordinal{syntax:"*";inherits:false}@property --tw-slashed-zero{syntax:"*";inherits:false}@property --tw-numeric-figure{syntax:"*";inherits:false}@property --tw-numeric-spacing{syntax:"*";inherits:false}@property --tw-numeric-fraction{syntax:"*";inherits:false}@property --tw-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:"*";inherits:false}@property --tw-inset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:"*";inherits:false}@property --tw-ring-color{syntax:"*";inherits:false}@property --tw-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:"*";inherits:false}@property --tw-inset-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:"*";inherits:false}@property --tw-ring-offset-width{syntax:"<length>";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:"*";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-blur{syntax:"*";inherits:false}@property --tw-brightness{syntax:"*";inherits:false}@property --tw-contrast{syntax:"*";inherits:false}@property --tw-grayscale{syntax:"*";inherits:false}@property --tw-hue-rotate{syntax:"*";inherits:false}@property --tw-invert{syntax:"*";inherits:false}@property --tw-opacity{syntax:"*";inherits:false}@property --tw-saturate{syntax:"*";inherits:false}@property --tw-sepia{syntax:"*";inherits:false}@property --tw-drop-shadow{syntax:"*";inherits:false}@property --tw-backdrop-blur{syntax:"*";inherits:false}@property --tw-backdrop-brightness{syntax:"*";inherits:false}@property --tw-backdrop-contrast{syntax:"*";inherits:false}@property --tw-backdrop-grayscale{syntax:"*";inherits:false}@property --tw-backdrop-hue-rotate{syntax:"*";inherits:false}@property --tw-backdrop-invert{syntax:"*";inherits:false}@property --tw-backdrop-opacity{syntax:"*";inherits:false}@property --tw-backdrop-saturate{syntax:"*";inherits:false}@property --tw-backdrop-sepia{syntax:"*";inherits:false}@property --tw-ease{syntax:"*";inherits:false}
 
-</style></head>
+</style><style>
+/* ===== 宽屏居中（iPad / 桌面）· 手机端不受影响 ===== */
+@media (min-width: 700px) {
+  /* 1. 内容列水平居中（原布局已是 mx-auto，这里再兜一层，
+        防止宿主页面或别的样式把列推到左边） */
+  .mx-auto.w-full.max-w-md,
+  .mx-auto.w-full.max-w-2xl {
+    margin-inline: auto;
+  }
+
+  /* 2. 首页 / 店里登录 / 顾客查余额这类短页面：整列在屏幕里上下居中，
+        不再贴在最上面、下面留一大片空白。
+        用 margin-block:auto 而不是 justify-content:center，
+        内容超过一屏时会自动退回顶部，不会被裁掉。 */
+  .min-h-screen:has(> .max-w-md) {
+    display: flex;
+    flex-direction: column;
+  }
+  .min-h-screen:has(> .max-w-md) > .max-w-md {
+    margin-block: auto;
+  }
+
+  /* 3. 徽章 + 店名这一行在列内水平居中，整页左右对称 */
+  .max-w-md > .flex.items-center.gap-4 {
+    justify-content: center;
+  }
+}
+</style>
+</head>
   <body>
     <div
       data-generated-space-root=""
@@ -294,6 +322,28 @@
 
   /* -------------------------------------------------------------- 初始化 */
 
+  /*
+    清掉示例数据：note 为「示例会员」的会员及其流水/审批，以及示例店员
+    （小芳 1111 / 小丽 2222，按「名字 + PIN」同时匹配，避免误删同名店员）。
+    传参 d 可以对任意库对象操作（启动时清理、面板里手动清除都用它）。
+  */
+  function purgeDemo(d) {
+    d = d || db;
+    var ids = {};
+    d.members.forEach(function (m) { if (m.note === '示例会员') ids[m.id] = true; });
+    var count = Object.keys(ids).length;
+    if (count) {
+      d.members = d.members.filter(function (m) { return !ids[m.id]; });
+      d.transactions = d.transactions.filter(function (t) { return !ids[t.memberId]; });
+      d.pending = d.pending.filter(function (p) { return !ids[p.memberId]; });
+    }
+    d.staff = d.staff.filter(function (s) {
+      var demo = (s.name === '小芳' && s.pin === '1111') || (s.name === '小丽' && s.pin === '2222');
+      return !demo;
+    });
+    return count;
+  }
+
   function boot() {
     var raw = readRaw();
     var parsed = null;
@@ -304,11 +354,20 @@
     var changed = false;
 
     if (!db.seeded) {
-      // 首次运行：预置老板 PIN、恢复口令、示例会员与店员
+      // 首次运行：只预置老板 PIN 和恢复口令，账本保持空的
+      // （0 会员 / 0 流水 / 0 店员 / 0 待审批）。示例数据不再自动塞进来，
+      // 需要试用时可在「本地数据」面板里手动载入。
       if (!db.settings.boss_pin) { db.settings.boss_pin = '8888'; changed = true; }
       if (!db.settings.boss_recovery_phrase) { db.settings.boss_recovery_phrase = '紫涵美发'; changed = true; }
-      if (!db.members.length) { seedExamples(db); changed = true; }
       db.seeded = true;
+      changed = true;
+    }
+    // 旧版本第一次打开时会自动预置示例会员（王小美等）和示例店员（小芳、小丽）。
+    // 这台设备如果还留着那批示例数据，升级后一次性清掉，账本从零开始；
+    // 只清示例（note = 示例会员 / 示例店员的 PIN），真实录入的会员和店员原样保留。
+    if (!db.settings.demo_purge_v2) {
+      purgeDemo(db);
+      db.settings.demo_purge_v2 = 'done';
       changed = true;
     }
     if (changed) persist();
@@ -1077,6 +1136,8 @@
     });
     if (!next.settings.boss_pin && data.bossPin) next.settings.boss_pin = String(data.bossPin);
     if (!next.settings.boss_pin) next.settings.boss_pin = '8888';
+    // 备份里的数据就是用户要的，标记为已处理，别在下次启动时又把示例数据清掉
+    if (!next.settings.demo_purge_v2) next.settings.demo_purge_v2 = 'done';
     next.seeded = true;
     db = next;
     persist();
@@ -1084,15 +1145,9 @@
   }
 
   function clearDemo() {
-    var ids = {};
-    db.members.forEach(function (m) { if (m.note === '示例会员') ids[m.id] = true; });
-    if (!Object.keys(ids).length) return 0;
-    db.members = db.members.filter(function (m) { return !ids[m.id]; });
-    db.transactions = db.transactions.filter(function (t) { return !ids[t.memberId]; });
-    db.pending = db.pending.filter(function (p) { return !ids[p.memberId]; });
-    db.staff = db.staff.filter(function (s) { return s.name !== '小芳' && s.name !== '小丽'; });
-    persist();
-    return Object.keys(ids).length;
+    var n = purgeDemo(db);
+    if (n) persist();
+    return n;
   }
 
   function resetAll() {
@@ -1100,6 +1155,7 @@
     db.seeded = true;
     db.settings.boss_pin = '8888';
     db.settings.boss_recovery_phrase = '紫涵美发';
+    db.settings.demo_purge_v2 = 'done';
     persist();
   }
 
@@ -1196,6 +1252,7 @@
     exportBackup: exportBackup,
     importBackup: importBackup,
     clearDemo: clearDemo,
+    seedExamples: function () { return ACTIONS.seedExamples({}); },
     resetAll: resetAll,
     stats: stats,
     raw: function () { return db; }
@@ -1359,17 +1416,20 @@
             '<h3>测试入口（别让顾客看到）</h3>' +
             '<div class="zh-tips">' +
               '雇主 PIN：<b>' + esc(st.bossPin || '未设置') + '</b>（恢复口令 <b>' + esc(st.recovery || '未设置') + '</b>）<br>' +
-              '店员 PIN：' + (st.staff.length ? st.staff.map(function (s) { return '<b>' + esc(s.pin) + '</b>（' + esc(s.name) + '）'; }).join('、') : '未建店员') + '<br>' +
-              '顾客查询：手机号 13800138001～13800138005，PIN <b>1234</b>' +
+              '店员 PIN：' + (st.staff.length ? st.staff.map(function (s) { return '<b>' + esc(s.pin) + '</b>（' + esc(s.name) + '）'; }).join('、') : '还没建店员，去「管理」里加') +
+              (demo > 0 ? '<br>示例顾客：手机号 13800138001～13800138005，PIN <b>1234</b>' : '') +
             '</div>' +
           '</div>'
         : '') +
 
       '<div class="zh-sec" style="margin-top:14px">' +
         '<h3>示例数据</h3>' +
-        '<p>' + (demo ? '现在还有 ' + demo + ' 位示例会员（王小美等）和示例店员（小芳、小丽），正式用之前建议清掉。' : '示例数据已清理干净。') + '</p>' +
+        '<p>' + (demo
+          ? '现在有 ' + demo + ' 位示例会员（王小美等）和示例店员（小芳、小丽），是手动载入的试用数据，正式用之前记得清掉。'
+          : '现在没有示例数据，账本是空的：' + st.members + ' 位会员、' + st.transactions + ' 条流水。可以手动载入一组示例数据先看看界面。') + '</p>' +
         '<div class="zh-btns">' +
           '<button class="zh-btn" type="button" data-zh="demo" ' + (demo ? '' : 'disabled') + '>清除示例会员与流水</button>' +
+          '<button class="zh-btn" type="button" data-zh="seed">载入示例数据（试用）</button>' +
         '</div>' +
       '</div>' +
 
@@ -1416,6 +1476,7 @@
       if (act === 'export') { doExport(); return; }
       if (act === 'import') { pickImport(); return; }
       if (act === 'demo') { doClearDemo(); return; }
+      if (act === 'seed') { doSeedDemo(); return; }
       if (act === 'reset') { doReset(); return; }
     });
   }
@@ -1504,6 +1565,14 @@
     L.clearDemo();
     render();
     flash('示例数据已清除，可以开始录真实会员了。', 'ok');
+    setTimeout(function () { window.location.reload(); }, 900);
+  }
+
+  function doSeedDemo() {
+    if (!window.confirm('载入一组示例会员（王小美等 5 位）和示例店员（小芳、小丽），用来先看看界面？\n\n它们只是试用数据，正式用之前可以一键清掉。')) return;
+    L.seedExamples();
+    render();
+    flash('示例数据已载入，可以先到处点着看看。', 'ok');
     setTimeout(function () { window.location.reload(); }, 900);
   }
 
